@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EL TOMATO - Presentación Final ITIL v4 & IA (Entrega 5 - UNIS)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js r128 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tomato: {
+                            50: '#fff5f2',
+                            100: '#ffe6e0',
+                            500: '#e63946',
+                            600: '#D9381E',
+                            700: '#b52812',
+                            800: '#801b0b',
+                            900: '#4a0f06',
+                        },
+                        cream: {
+                            50: '#FFFDF9',
+                            100: '#FFF8F0',
+                            200: '#F5E6D3',
+                        },
+                        basil: {
+                            500: '#388E3C',
+                            600: '#2E7D32',
+                            700: '#1B5E20',
+                        },
+                        crust: {
+                            500: '#F59E0B',
+                            600: '#D97706',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Playfair Display', 'serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #14110f;
+            color: #FFF8F0;
+        }
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .interactive-panel {
+            pointer-events: auto;
+        }
+        /* Glassmorphism */
+        .glass-card {
+            background: rgba(24, 20, 18, 0.84);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(245, 230, 211, 0.16);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+        .glass-cream {
+            background: rgba(255, 248, 240, 0.94);
+            backdrop-filter: blur(12px);
+            color: #1A1817;
+            border: 2px solid #801b0b;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(217, 56, 30, 0.6);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(217, 56, 30, 0.9);
+        }
+        .slide-transition {
+            transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(217, 56, 30, 0.5); }
+            50% { box-shadow: 0 0 28px rgba(245, 158, 11, 0.85); }
+        }
+        .glow-badge {
+            animation: pulse-glow 3s infinite;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased select-none">
+
+    <!-- 3D WebGL Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- 3D Floating Labels Container -->
+    <div id="labels-container" class="fixed inset-0 pointer-events-none z-5 overflow-hidden"></div>
+
+    <!-- Main UI Overlay -->
+    <div id="main-ui" class="ui-layer w-full h-full flex flex-col justify-between p-3 sm:p-5 transition-opacity duration-300">
+        
+        <!-- TOP BAR: Branding & Pure 3D View Toggle -->
+        <header class="interactive-panel glass-card rounded-2xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-tomato-600">
+            <!-- Brand & Course Info -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-tomato-600 to-tomato-800 flex items-center justify-center shadow-lg border border-crust-500/40">
+                    <i class="fa-solid fa-pizza-slice text-cream-100 text-lg"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-display font-bold text-lg tracking-wide text-cream-100">EL TOMATO</span>
+                        <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-tomato-600/30 text-tomato-100 border border-tomato-500/40">Entrega 5 • CSI + IA</span>
+                    </div>
+                    <p class="text-xs text-cream-200/70 hidden sm:block">Technology Management (ITIL v4) • Ing. Oscar García</p>
+                </div>
+            </div>
+
+            <!-- Quick 3D Toggle -->
+            <div class="flex items-center gap-2">
+                <!-- Pure 3D View Toggle -->
+                <button onclick="togglePure3D()" title="Explorar Pizzería 3D Libre (Tecla H)" class="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 text-xs font-semibold flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-cube"></i>
+                    <span>Explorar 3D Libre (H)</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- MIDDLE CONTENT AREA: Clean Visual Slide Deck Panel (Leaves Right Side Open for 3D Pizzeria) -->
+        <main class="flex-1 flex items-center justify-start my-3 overflow-hidden relative">
+            
+            <!-- Left/Main Presentation Slide Card -->
+            <div id="slide-card" class="interactive-panel glass-card rounded-2xl w-full lg:w-[58%] xl:w-[54%] max-h-full flex flex-col overflow-hidden slide-transition border-l-4 border-l-tomato-600">
+                
+                <!-- Slide Header -->
+                <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-tomato-900/50 to-transparent">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span id="slide-tag" class="text-[11px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-tomato-600 text-white font-semibold">Estación 1/7</span>
+                            <span id="slide-cam-label" class="text-xs text-amber-400/90 font-mono flex items-center gap-1">
+                                <i class="fa-solid fa-video"></i> <span>Vista Panorámica Pizzería</span>
+                            </span>
+                        </div>
+                        <h1 id="slide-title" class="text-xl sm:text-2xl font-display font-bold text-cream-100 mt-1">Ciclo de Vida ITIL v4: Restaurante "El Tomato"</h1>
+                    </div>
+                    <div id="slide-icon" class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl text-tomato-500 shrink-0">
+                        <i class="fa-solid fa-sitemap"></i>
+                    </div>
+                </div>
+
+                <!-- Dynamic Slide Body (Scrollable) -->
+                <div id="slide-body" class="p-5 overflow-y-auto space-y-4 text-sm leading-relaxed flex-1">
+                    <!-- Populated via JS -->
+                </div>
+
+                <!-- Slide Footer Meta -->
+                <div class="px-5 py-2.5 bg-black/40 border-t border-white/10 flex flex-wrap items-center justify-between text-xs text-cream-200/70 gap-2">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-server text-tomato-500"></i>
+                        <span>Instancia verificada: <strong>GLPI 10.0.15</strong> (Raspberry Pi + Docker) • Corte: 04/11/2026</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-amber-400">
+                        <i class="fa-solid fa-hand-pointer"></i>
+                        <span>Arrastra la escena 3D o haz clic en las etiquetas flotantes</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- BOTTOM NAVIGATION BAR: 7 3D Pizzeria Stations -->
+        <footer class="interactive-panel glass-card rounded-2xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            <!-- Prev / Next Buttons -->
+            <div class="flex items-center gap-2">
+                <button onclick="prevSlide()" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-tomato-600 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-arrow-left"></i> Anterior
+                </button>
+                <button onclick="nextSlide()" class="px-4 py-2 rounded-xl bg-tomato-600 hover:bg-tomato-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-tomato-600/30 transition">
+                    Siguiente <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Station Pills -->
+            <div id="station-pills" class="flex items-center gap-1.5 overflow-x-auto py-1">
+                <!-- Populated via JS -->
+            </div>
+
+            <!-- Camera Quick Reset -->
+            <div class="hidden xl:flex items-center gap-2 text-xs text-cream-200/70">
+                <button onclick="focusCurrentStation()" class="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 text-cream-100 transition flex items-center gap-1">
+                    <i class="fa-solid fa-crosshairs text-amber-400"></i> Centrar Cámara 3D
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Floating Button when in Pure 3D Mode -->
+    <button id="restore-ui-btn" onclick="togglePure3D()" class="fixed top-5 right-5 z-30 hidden px-4 py-2.5 rounded-xl bg-tomato-600 hover:bg-tomato-500 text-white font-bold text-xs shadow-2xl items-center gap-2 border border-white/20">
+        <i class="fa-solid fa-eye"></i> Mostrar Diapositivas (Tecla H)
+    </button>
+
+    <script>
+        /********************************************************************
+         * 1. PRESENTATION DATA: 7 VISUAL SLIDES (NO SCRIPT TEXT IN UI)
+         ********************************************************************/
+        const slidesData = [
+            {
+                id: 1,
+                shortName: "1. Ciclo ITIL",
+                tag: "Estación 1/7 • Integración E1 a E5",
+                camLabel: "Vista Panorámica Restaurante El Tomato",
+                title: "Integración del Ciclo de Vida ITIL v4: EL TOMATO",
+                icon: "fa-pizza-slice",
+                speaker: "Mynor Barrios",
+                role: "Service Strategy / Design Owner",
+                camera: { pos: { x: 4, y: 10.5, z: 18.5 }, target: { x: -1.5, y: 2, z: -1 } },
+                content: `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="p-3.5 rounded-xl bg-white/5 border border-white/10">
+                            <div class="text-xs text-amber-400 font-mono uppercase">Plataforma ITSM</div>
+                            <div class="text-lg font-bold text-white mt-0.5">GLPI 10.0.15</div>
+                            <p class="text-xs text-cream-200/70 mt-1">Alojado en Raspberry Pi con Docker + 3 Plugins propios (CMDB Map, Dashboard ITIL, EL TOMATO IA).</p>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-white/5 border border-white/10">
+                            <div class="text-xs text-emerald-400 font-mono uppercase">Alcance CMDB (E5)</div>
+                            <div class="text-lg font-bold text-white mt-0.5">51 CIs y 62 Relaciones</div>
+                            <p class="text-xs text-cream-200/70 mt-1">Evolución desde 43 CIs (E4) sumando periféricos del POS en Zona 10 y Majadas.</p>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-tomato-600/20 border border-tomato-500/40">
+                            <div class="text-xs text-tomato-100 font-mono uppercase">Bono Funcional IA (+5 pts)</div>
+                            <div class="text-lg font-bold text-amber-300 mt-0.5">EL TOMATO IA V9.4.6</div>
+                            <p class="text-xs text-cream-100/80 mt-1">Triage asistido con Qwen3-14B local, Broker GET y revisión humana.</p>
+                        </div>
+                    </div>
+
+                    <!-- Flujo de las 5 Entregas (Figura 9 del Reporte) -->
+                    <div class="p-4 rounded-xl glass-cream">
+                        <div class="text-xs font-bold uppercase tracking-wider text-tomato-800 mb-2 flex items-center justify-between">
+                            <span><i class="fa-solid fa-diagram-project mr-1"></i> Narrativa Integrada del Ciclo de Vida (Entregas 1 a 5)</span>
+                            <span class="font-mono text-[11px] bg-tomato-800 text-white px-2 py-0.5 rounded">6 Servicios del Portafolio</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-5 gap-2 text-xs">
+                            <div class="p-2.5 rounded-lg bg-amber-100/90 border border-amber-700/40">
+                                <div class="font-bold text-amber-950">E1 • Estrategia</div>
+                                <p class="text-[11px] text-stone-700 mt-1">Misión, visión, 6 servicios, GLPI en Raspberry Pi y 4 roles ITIL.</p>
+                            </div>
+                            <div class="p-2.5 rounded-lg bg-orange-50 border border-tomato-700/30">
+                                <div class="font-bold text-tomato-900">E2 • Diseño</div>
+                                <p class="text-[11px] text-stone-700 mt-1">Catálogo dual, SLAs (2h/8h/72h), CMDB en Azure/Odoo y Portal Self-Service.</p>
+                            </div>
+                            <div class="p-2.5 rounded-lg bg-orange-50 border border-tomato-700/30">
+                                <div class="font-bold text-tomato-900">E3 • Transición</div>
+                                <p class="text-[11px] text-stone-700 mt-1">Cambios con CAB, Releases (Proyectos) y 15 artículos de Conocimiento.</p>
+                            </div>
+                            <div class="p-2.5 rounded-lg bg-orange-50 border border-tomato-700/30">
+                                <div class="font-bold text-tomato-900">E4 • Operación</div>
+                                <p class="text-[11px] text-stone-700 mt-1">Incidentes, Problemas, Solicitudes y entrada en "Ticket sin clasificar".</p>
+                            </div>
+                            <div class="p-2.5 rounded-lg bg-emerald-100 border-2 border-emerald-700">
+                                <div class="font-bold text-emerald-950">E5 • CSI + IA</div>
+                                <p class="text-[11px] text-stone-800 mt-1">Dashboard ITIL, KPIs, 10 mejoras CSI y Triage Qwen3-14B.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Equipo y Roles ITIL -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-sky-500/30 flex items-center gap-3">
+                            <i class="fa-solid fa-compass-drafting text-sky-400 text-lg"></i>
+                            <div>
+                                <div class="font-bold text-white">Barrios Cruz, Mynor Enrique</div>
+                                <div class="text-sky-300 text-[11px]">Service Strategy / Design Owner • Plugin Emisor GLPI & Registro CSI</div>
+                            </div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-emerald-500/30 flex items-center gap-3">
+                            <i class="fa-solid fa-chart-line text-emerald-400 text-lg"></i>
+                            <div>
+                                <div class="font-bold text-white">Monterroso Díaz, Gadiel David</div>
+                                <div class="text-emerald-300 text-[11px]">Knowledge & CSI Manager (Líder E5) • Plugin Dashboard ITIL & Red</div>
+                            </div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-rose-500/30 flex items-center gap-3">
+                            <i class="fa-solid fa-fire-extinguisher text-rose-400 text-lg"></i>
+                            <div>
+                                <div class="font-bold text-white">Solis Reyes, Luis Carlos</div>
+                                <div class="text-rose-300 text-[11px]">Incident & Problem Manager • Criterios Triage, API REST, KB & KPIs Operación</div>
+                            </div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-purple-500/30 flex items-center gap-3">
+                            <i class="fa-solid fa-brain text-purple-400 text-lg"></i>
+                            <div>
+                                <div class="font-bold text-white">Soto Paz, Fernando Boanerges</div>
+                                <div class="text-purple-300 text-[11px]">Change & Release Manager • Motor Qwen3-14B, Broker GET & App Desktop</div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 2,
+                shortName: "2. Dashboard ITIL",
+                tag: "Estación 2/7 • Medición en Línea",
+                camLabel: "Monitor Gerencial (Plugin itilkpi v1.0.0)",
+                title: "Tablero Gerencial: Dashboard ITIL - El Tomato",
+                icon: "fa-gauge-high",
+                speaker: "Gadiel Monterroso",
+                role: "Knowledge & CSI Manager (Líder Fase 5)",
+                camera: { pos: { x: -4.8, y: 4.1, z: -1.2 }, target: { x: -7.5, y: 3.1, z: -6.8 } },
+                content: `
+                    <!-- Réplica Interactiva de la Figura 2 del Reporte -->
+                    <div class="p-4 rounded-xl glass-cream space-y-3">
+                        <div class="flex flex-wrap items-center justify-between border-b border-stone-300 pb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded bg-tomato-700 text-white font-mono text-[10px]">Plugin Propio: itilkpi v1.0.0</span>
+                                <h3 class="font-bold text-stone-900 text-sm">Tablero Gerencial de TI - El Tomato (Verificado 04/11/2026)</h3>
+                            </div>
+                            <span class="text-[11px] font-mono text-stone-600">Verificación cruzada: 38 casos totales en GLPI</span>
+                        </div>
+
+                        <!-- Bloque 1: Salud del Servicio -->
+                        <div>
+                            <div class="text-[11px] font-bold uppercase text-stone-700 mb-1.5"><i class="fa-solid fa-heart-pulse text-tomato-600 mr-1"></i> Bloque 1: Salud del Servicio</div>
+                            <div class="grid grid-cols-3 gap-2.5 text-center">
+                                <div class="p-2.5 rounded-lg bg-white border-l-4 border-emerald-600 shadow-sm">
+                                    <div class="text-[11px] text-stone-500">SLA Cumplido</div>
+                                    <div class="text-xl font-extrabold text-emerald-600">100%</div>
+                                    <div class="text-[10px] text-stone-500">De 11 casos evaluados (E4)</div>
+                                </div>
+                                <div class="p-2.5 rounded-lg bg-white border-l-4 border-sky-600 shadow-sm">
+                                    <div class="text-[11px] text-stone-500">Primera Respuesta</div>
+                                    <div class="text-xl font-extrabold text-sky-600">2.3 min</div>
+                                    <div class="text-[10px] text-stone-500">Meta: &lt; 10 min</div>
+                                </div>
+                                <div class="p-2.5 rounded-lg bg-white border-l-4 border-rose-600 shadow-sm">
+                                    <div class="text-[11px] text-stone-500">Riesgo Operativo</div>
+                                    <div class="text-xs font-bold text-stone-800 mt-1">Vencidos (Overdue): <span class="text-rose-600 font-extrabold">6</span></div>
+                                    <div class="text-xs font-bold text-stone-800">Críticos Abiertos: <span class="text-rose-600 font-extrabold">2</span> (#27, #30)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bloque 2: Eficiencia del Soporte -->
+                        <div>
+                            <div class="text-[11px] font-bold uppercase text-stone-700 mb-1.5"><i class="fa-solid fa-gears text-amber-600 mr-1"></i> Bloque 2: Eficiencia del Soporte</div>
+                            <div class="grid grid-cols-3 gap-2.5 text-center">
+                                <div class="p-2.5 rounded-lg bg-white border border-stone-200 shadow-sm">
+                                    <div class="text-[11px] text-stone-500">Backlog Activo (WIP)</div>
+                                    <div class="text-xl font-extrabold text-amber-600">25</div>
+                                    <div class="text-[10px] text-stone-500">21 entrantes + 4 en curso</div>
+                                </div>
+                                <div class="p-2.5 rounded-lg bg-white border border-stone-200 shadow-sm">
+                                    <div class="text-[11px] text-stone-500">Antigüedad (Aging)</div>
+                                    <div class="flex justify-around items-center mt-1 text-xs font-bold">
+                                        <span class="text-emerald-700">7 <small class="block font-normal text-[9px]">0-24h</small></span>
+                                        <span class="text-amber-600">2 <small class="block font-normal text-[9px]">1-3d</small></span>
+                                        <span class="text-rose-600">16 <small class="block font-normal text-[9px]">&gt;3 días</small></span>
+                                    </div>
+                                </div>
+                                <div class="p-2.5 rounded-lg bg-white border border-stone-200 shadow-sm">
+                                    <div class="text-[11px] text-stone-500">MTTR Global</div>
+                                    <div class="text-xl font-extrabold text-indigo-900">0.08 Hrs</div>
+                                    <div class="text-[10px] text-stone-500">≈ 5 min (entorno simulado)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bloque 3: Impacto en el Negocio -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div class="p-2.5 rounded-lg bg-rose-50 border border-rose-300">
+                                <div class="text-[11px] font-bold text-rose-900 uppercase"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Cuello de Botella en Triage</div>
+                                <ul class="text-xs text-stone-800 mt-1 space-y-0.5">
+                                    <li>• <strong>Mesa de Ayuda &gt; Ticket sin clasificar: <span class="text-rose-700 font-extrabold">20 casos</span></strong></li>
+                                    <li>• Software Odoo &gt; Incidente (Bug): <strong>3 casos</strong></li>
+                                    <li>• Sistema de Punto de Venta (POS): <strong>3 casos</strong></li>
+                                </ul>
+                            </div>
+                            <div class="p-2.5 rounded-lg bg-amber-50 border border-amber-300">
+                                <div class="text-[11px] font-bold text-amber-900 uppercase"><i class="fa-solid fa-clock mr-1"></i> Horas Pico & Verificación Nativa</div>
+                                <p class="text-xs text-stone-800 mt-1">
+                                    Pico a las <strong>20:00 hrs (12 fallas)</strong> por la demo E4. Coincidencia 100% con tablero nativo de GLPI: 38 casos, 13 resueltos y 0 cerrados (origina <strong>CSI-01 y CSI-08</strong>).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 3,
+                shortName: "3. KPIs Procesos",
+                tag: "Estación 3/7 • Evaluación de Metas",
+                camLabel: "Salón de Mesas y Operación del Restaurante",
+                title: "KPIs por Proceso ITIL: Operación, Transición y Diseño",
+                icon: "fa-list-check",
+                speaker: "Luis Carlos Solis",
+                role: "Incident & Problem Manager",
+                camera: { pos: { x: 6.5, y: 4.8, z: 7.5 }, target: { x: 0, y: 1.5, z: 1.5 } },
+                content: `
+                    <div class="space-y-3 text-xs">
+                        <!-- Tabla Resumen de Brechas y Aciertos por Proceso -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                            <!-- Operación -->
+                            <div class="p-3 rounded-xl bg-white/5 border border-rose-500/30 space-y-2">
+                                <div class="font-bold text-rose-300 uppercase flex items-center justify-between border-b border-white/10 pb-1">
+                                    <span>1. Operación (E4)</span>
+                                    <i class="fa-solid fa-headset"></i>
+                                </div>
+                                <div class="flex justify-between"><span>SLA Incidentes (7/7):</span><span class="px-1.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">100% Cumple</span></div>
+                                <div class="flex justify-between"><span>SLA Solicitudes (4/4):</span><span class="px-1.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">100% Cumple</span></div>
+                                <div class="flex justify-between"><span>FCR N1 (Meta ≥30%):</span><span class="px-1.5 rounded bg-rose-500/30 text-rose-300 font-mono">14% No cumple</span></div>
+                                <div class="flex justify-between"><span>Escalamiento N3 (≤20%):</span><span class="px-1.5 rounded bg-rose-500/30 text-rose-300 font-mono">43% No cumple</span></div>
+                                <div class="flex justify-between"><span>Prioridad Coherente:</span><span class="px-1.5 rounded bg-rose-500/30 text-rose-300 font-mono">0/7 No cumple</span></div>
+                                <div class="flex justify-between"><span>Problemas con RCA:</span><span class="px-1.5 rounded bg-rose-500/30 text-rose-300 font-mono">1/2 No cumple</span></div>
+                            </div>
+
+                            <!-- Transición -->
+                            <div class="p-3 rounded-xl bg-white/5 border border-purple-500/30 space-y-2">
+                                <div class="font-bold text-purple-300 uppercase flex items-center justify-between border-b border-white/10 pb-1">
+                                    <span>2. Transición (E3)</span>
+                                    <i class="fa-solid fa-code-branch"></i>
+                                </div>
+                                <div class="flex justify-between"><span>Cambios Exitosos (3/3):</span><span class="px-1.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">100% Cumple</span></div>
+                                <div class="flex justify-between"><span>Aprobación CAB:</span><span class="px-1.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">3/3 Cumple</span></div>
+                                <div class="flex justify-between"><span>Downtime Cambio #1:</span><span class="px-1.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">15m &lt; 20m</span></div>
+                                <div class="flex justify-between"><span>Artículos KB Publicados:</span><span class="px-1.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">15 Cumple</span></div>
+                                <div class="flex justify-between"><span>Registros KB Vacíos:</span><span class="px-1.5 rounded bg-rose-500/30 text-rose-300 font-mono">39 No cumple</span></div>
+                                <div class="flex justify-between"><span>Releases Completados:</span><span class="px-1.5 rounded bg-rose-500/30 text-rose-300 font-mono">1/3 No cumple</span></div>
+                            </div>
+
+                            <!-- Diseño -->
+                            <div class="p-3 rounded-xl bg-white/5 border border-sky-500/30 space-y-2">
+                                <div class="font-bold text-sky-300 uppercase flex items-center justify-between border-b border-white/10 pb-1">
+                                    <span>3. Diseño (E2)</span>
+                                    <i class="fa-solid fa-network-wired"></i>
+                                </div>
+                                <div class="flex justify-between"><span>Asignación SLA por regla:</span><span class="px-1.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">11/11 Cumple</span></div>
+                                <div class="flex justify-between"><span>Crecimiento CMDB:</span><span class="px-1.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">51 CI / 62 Rel</span></div>
+                                <div class="flex justify-between"><span>Cobertura Portafolio:</span><span class="px-1.5 rounded bg-rose-500/30 text-rose-300 font-mono">3/6 No cumple</span></div>
+                                <div class="flex justify-between"><span>Tickets con CI (≥80%):</span><span class="px-1.5 rounded bg-rose-500/30 text-rose-300 font-mono">1/11 No cumple</span></div>
+                                <div class="flex justify-between"><span>Exactitud Atributos CI:</span><span class="px-1.5 rounded bg-rose-500/30 text-rose-300 font-mono">PRN=AMD Error</span></div>
+                                <div class="flex justify-between"><span>Disponibilidad Real:</span><span class="px-1.5 rounded bg-amber-500/20 text-amber-300 font-mono">Sin base</span></div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-xl glass-cream flex items-center justify-between gap-3">
+                            <div>
+                                <div class="font-bold text-tomato-900">Trazabilidad de las Metas (Tabla 17 del Reporte)</div>
+                                <p class="text-[11px] text-stone-700">Las metas provienen de 3 fuentes auditables: <strong>1) SLAs acordados en E2/E4</strong> (2h, 8h, 72h), <strong>2) Estándares ITIL</strong> (SLA ≥95%, Cambios ≥90%) y <strong>3) Metas de equipo para 2 sucursales</strong> (FCR ≥30%, 0 casos en triage &gt;1h).</p>
+                            </div>
+                            <span class="px-3 py-1.5 rounded-lg bg-tomato-700 text-white font-mono text-xs shrink-0">Medición → Brecha → CSI</span>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 4,
+                shortName: "4. Arquitectura IA",
+                tag: "Estación 4/7 • Bono +5 Puntos",
+                camLabel: "Rack de Servidores y Nodo IA (Qwen3-14B)",
+                title: "Funcionalidad Real de IA: EL TOMATO IA V9.4.6",
+                icon: "fa-microchip",
+                speaker: "Fernando Soto",
+                role: "Change & Release Manager (Arquitecto IA)",
+                camera: { pos: { x: 4.8, y: 4.5, z: -1.8 }, target: { x: 7.2, y: 3.6, z: -6.5 } },
+                content: `
+                    <!-- Diagrama de Flujo Interactivo (Figura 3 y 4 del Reporte) -->
+                    <div class="p-3.5 rounded-xl glass-cream space-y-2.5">
+                        <div class="flex items-center justify-between border-b border-stone-300 pb-1.5">
+                            <span class="font-bold text-tomato-900 text-xs uppercase"><i class="fa-solid fa-shield-halved mr-1"></i> Arquitectura de Triage Asistido con Evidencia Verificable (Commit 6b0106f)</span>
+                            <span class="font-mono text-[10px] bg-emerald-800 text-white px-2 py-0.5 rounded">AutoApply = OFF • GLPI_READ_ONLY = true</span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-6 gap-1.5 text-[11px] text-center">
+                            <div class="p-2 rounded bg-amber-100 border border-amber-600">
+                                <div class="font-bold text-stone-900">1. Portal GLPI</div>
+                                <div class="text-[10px] text-stone-600">Caso entra en "Ticket sin clasificar"</div>
+                            </div>
+                            <div class="p-2 rounded bg-sky-100 border border-sky-600">
+                                <div class="font-bold text-stone-900">2. Plugin IA</div>
+                                <div class="text-[10px] text-stone-600">Webhook JSON + Bearer (Tailscale)</div>
+                            </div>
+                            <div class="p-2 rounded bg-orange-100 border border-orange-600">
+                                <div class="font-bold text-stone-900">3. Cola SQLite</div>
+                                <div class="text-[10px] text-stone-600">Receptor Python idempotente (:8090)</div>
+                            </div>
+                            <div class="p-2 rounded bg-purple-100 border border-purple-600">
+                                <div class="font-bold text-stone-900">4. Broker GET</div>
+                                <div class="text-[10px] text-stone-600">Máx 6 GET y 2 saltos (51 CI / 62 Rel)</div>
+                            </div>
+                            <div class="p-2 rounded bg-rose-100 border border-rose-600">
+                                <div class="font-bold text-stone-900">5. Qwen3-14B</div>
+                                <div class="text-[10px] text-stone-600">llama.cpp (:18080) Contrato JSON</div>
+                            </div>
+                            <div class="p-2 rounded bg-emerald-100 border-2 border-emerald-700">
+                                <div class="font-bold text-emerald-950">6. IA Desktop</div>
+                                <div class="text-[10px] text-stone-700">PySide6 • Revisión Humana</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div class="p-3 rounded-xl bg-white/5 border border-white/10 space-y-1.5">
+                            <div class="font-bold text-amber-400 uppercase"><i class="fa-solid fa-Sliders mr-1"></i> Presupuesto de Contexto y Seguridad</div>
+                            <ul class="space-y-1 text-cream-100/90">
+                                <li>• <strong>Ventana Qwen3-14B:</strong> 4,096 tokens (Máx entrada: 2,800 | Reserva salida: 800 | Margen: 496).</li>
+                                <li>• <strong>Jerarquía de Evidencia:</strong> Distingue vínculo formal (<code>Item_Ticket</code>) de candidatos por ubicación (<code>candidate_not_ticket_linked</code>).</li>
+                                <li>• <strong>Secretos protegidos:</strong> App-Token, User-Token y Bearer cifrados con <strong>DPAPI de Windows</strong>.</li>
+                            </ul>
+                        </div>
+                        <div class="p-3 rounded-xl bg-white/5 border border-white/10 space-y-1.5">
+                            <div class="font-bold text-emerald-400 uppercase"><i class="fa-solid fa-filter-circle-xmark mr-1"></i> Gobernanza: Validaciones Deterministas</div>
+                            <ul class="space-y-1 text-cream-100/90">
+                                <li>• Si la categoría propuesta contradice el tipo (ej. Caso #35 <code>category_disallows_incident</code>), pasa a <code>manual_review</code>.</li>
+                                <li>• Nunca asigna categorías por defecto ante errores de red o preflight (Caso #38 corregido en V9.4.3 de 3,084 a 2,735 tokens).</li>
+                            </ul>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 5,
+                shortName: "5. Caso #40 POS",
+                tag: "Estación 5/7 • Evidencia Empírica",
+                camLabel: "Caja Principal Zona 10 (POS-SUC01 y Periféricos)",
+                title: "Auditoría en Vivo: Caso #40 en Caja Principal Zona 10",
+                icon: "fa-cash-register",
+                speaker: "Fernando Soto & Luis Carlos Solis",
+                role: "Triage IA + Incident Management",
+                camera: { pos: { x: -1.5, y: 3.2, z: 2.2 }, target: { x: -4.5, y: 1.8, z: -2.5 } },
+                content: `
+                    <!-- Desglose del Caso #40 (Figura 6 y Tabla 14 del Reporte) -->
+                    <div class="p-3.5 rounded-xl glass-cream space-y-2.5">
+                        <div class="flex flex-wrap items-center justify-between border-b border-stone-300 pb-1.5">
+                            <div>
+                                <span class="px-2 py-0.5 rounded bg-tomato-700 text-white font-mono text-[10px]">Ticket #40 • Portal Simplificado</span>
+                                <span class="font-bold text-stone-900 text-xs ml-1">"Fallo de impresión de comprobantes en POS Zona 10"</span>
+                            </div>
+                            <span class="font-mono text-[11px] text-emerald-800 font-bold">Ubicación verificada: ID 12 (Zona 10 &gt; Caja Principal)</span>
+                        </div>
+
+                        <!-- Grafo de Candidatos Recuperados -->
+                        <div class="grid grid-cols-1 sm:grid-cols-5 gap-2 text-center text-[11px]">
+                            <div class="p-2 rounded-lg bg-sky-100 border-2 border-sky-700 flex flex-col justify-center">
+                                <div class="font-bold text-sky-950">POS-SUC01</div>
+                                <div class="text-[10px] text-stone-700">Computadora Candidata</div>
+                            </div>
+                            <div class="p-2 rounded-lg bg-amber-100 border-2 border-tomato-600">
+                                <div class="font-bold text-tomato-900"><i class="fa-solid fa-print mr-1"></i>PRN-TM20-Caja1</div>
+                                <div class="text-[10px] text-stone-700">Impresora Térmica POS</div>
+                            </div>
+                            <div class="p-2 rounded-lg bg-white border border-stone-300">
+                                <div class="font-bold text-stone-800">Terminal de Pago</div>
+                                <div class="text-[10px] text-stone-600">Periférico conectado</div>
+                            </div>
+                            <div class="p-2 rounded-lg bg-white border border-stone-300">
+                                <div class="font-bold text-stone-800">Cajón de Dinero</div>
+                                <div class="text-[10px] text-stone-600">Periférico conectado</div>
+                            </div>
+                            <div class="p-2 rounded-lg bg-white border border-stone-300">
+                                <div class="font-bold text-stone-800">Lector Códigos</div>
+                                <div class="text-[10px] text-stone-600">Periférico conectado</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Métricas de Auditoría del Caso #40 -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs">
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                            <div class="text-[10px] text-cream-200/60 uppercase">Tokens Entrada / Salida</div>
+                            <div class="text-base font-mono font-bold text-amber-400 mt-0.5">3,248 / 542</div>
+                            <div class="text-[10px] text-cream-200/60">En 2 rondas de inferencia</div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                            <div class="text-[10px] text-cream-200/60 uppercase">Consultas GET Broker</div>
+                            <div class="text-base font-mono font-bold text-emerald-400 mt-0.5">2 OK / 3 Bloq</div>
+                            <div class="text-[10px] text-cream-200/60">Rechazó <code>location_detail</code> en CI</div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                            <div class="text-[10px] text-cream-200/60 uppercase">Tiempo Clasificación</div>
+                            <div class="text-base font-mono font-bold text-sky-400 mt-0.5">9.23 seg</div>
+                            <div class="text-[10px] text-cream-200/60">Inferencia local Qwen3-14B</div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-emerald-600/20 border border-emerald-500/40">
+                            <div class="text-[10px] text-emerald-200 uppercase">Cambios Automáticos</div>
+                            <div class="text-base font-mono font-bold text-white mt-0.5">0 (Dry-Run)</div>
+                            <div class="text-[10px] text-emerald-200">Estado: <code>pending_human</code></div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 6,
+                shortName: "6. Registro CSI",
+                tag: "Estación 6/7 • Mejora Continua",
+                camLabel: "Horno de Piedra y Barra de Preparación",
+                title: "Registro CSI (10 Oportunidades) y Aprendizaje Continuo",
+                icon: "fa-arrows-spin",
+                speaker: "Gadiel Monterroso",
+                role: "Knowledge & CSI Manager",
+                camera: { pos: { x: -1.2, y: 3.6, z: -1.0 }, target: { x: 0, y: 2.2, z: -7.5 } },
+                content: `
+                    <!-- Tabla Completa de las 10 Oportunidades del Registro CSI (Tabla 18 del Reporte) -->
+                    <div class="p-3 rounded-xl glass-cream space-y-2">
+                        <div class="flex items-center justify-between border-b border-stone-300 pb-1">
+                            <span class="font-bold text-tomato-900 text-xs uppercase"><i class="fa-solid fa-clipboard-list mr-1"></i> Registro Oficial CSI (CSI-01 a CSI-10) • Conectado a Gestión de Cambios (CAB)</span>
+                            <span class="text-[10px] font-mono bg-stone-800 text-white px-2 py-0.5 rounded">Ciclo ITIL de 7 Pasos</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] max-h-48 overflow-y-auto pr-1">
+                            <div class="p-2 rounded bg-white border-l-4 border-rose-600">
+                                <strong>CSI-01 (Alta):</strong> Eliminar acumulación en triage (20 sin clasificar / 22 en cola plugin). Operar receptor continuo + máx 1h triage manual.
+                            </div>
+                            <div class="p-2 rounded bg-white border-l-4 border-rose-600">
+                                <strong>CSI-02 (Alta):</strong> Medir precisión de la IA construyendo conjunto etiquetado por técnicos y matriz de confusión (mitiga sesgo Caso #40).
+                            </div>
+                            <div class="p-2 rounded bg-white border-l-4 border-rose-600">
+                                <strong>CSI-03 (Alta):</strong> Priorizar incidentes críticos correctamente (0/7 coherentes; Caso #13 caída ERP quedó en Media). Regla automática.
+                            </div>
+                            <div class="p-2 rounded bg-white border-l-4 border-amber-500">
+                                <strong>CSI-04 (Media):</strong> Subir FCR (14% actual vs ≥30%) publicando guías [SOPORTE] de POS/impresoras y midiendo uso de FAQ.
+                            </div>
+                            <div class="p-2 rounded bg-white border-l-4 border-amber-500">
+                                <strong>CSI-05 (Media):</strong> Vincular CIs en triage (actual 1/11) y corregir fabricante de <code>PRN-TM20-Caja1</code> (registrada como AMD siendo EPSON).
+                            </div>
+                            <div class="p-2 rounded bg-white border-l-4 border-amber-500">
+                                <strong>CSI-06 (Media):</strong> Cerrar ciclo de vida de <code>REL-002</code> y <code>REL-003</code> (0%), documentar RCA en Problema #2 y publicar errores conocidos.
+                            </div>
+                            <div class="p-2 rounded bg-white border-l-4 border-sky-500">
+                                <strong>CSI-07 (Baja):</strong> Alinear CMDB con IA real V9.4.6 (dar de baja CIs históricos de pgvector y Ollama no usados) y sincronizar snapshot.
+                            </div>
+                            <div class="p-2 rounded bg-white border-l-4 border-rose-600">
+                                <strong>CSI-08 (Alta):</strong> Depurar datos de prueba que distorsionan KPIs (25 casos antiguos/IA abiertos, 39 artículos vacíos IDs 10-48, Cambio #4).
+                            </div>
+                            <div class="p-2 rounded bg-white border-l-4 border-amber-500">
+                                <strong>CSI-09 (Media):</strong> Mejorar prompt del planificador IA para usar <code>detail_ci</code> en periféricos en vez de <code>location_detail</code> (3 rechazos).
+                            </div>
+                            <div class="p-2 rounded bg-emerald-50 border-l-4 border-emerald-700">
+                                <strong>CSI-10 (Alta):</strong> Aprendizaje continuo guardando cada propuesta de Qwen junto con la decisión final del técnico como contexto histórico.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ciclo de Aprendizaje Continuo de la IA (Figura 8) -->
+                    <div class="p-3 rounded-xl bg-white/5 border border-emerald-500/30 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-graduation-cap text-emerald-400 text-xl"></i>
+                            <div>
+                                <div class="font-bold text-white">Aprendizaje Continuo sin Riesgo Operativo (Sección 6.4)</div>
+                                <p class="text-[11px] text-cream-200/80">1. Ticket Nuevo → 2. Propuesta Qwen → 3. Decisión del Técnico → 4. Histórico Etiquetado → 5. Medición Precisión → 6. Mejora del Contexto.</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 7,
+                shortName: "7. Cierre y Demo",
+                tag: "Estación 7/7 • Conclusiones y Defensa",
+                camLabel: "Vista General Iluminada - El Tomato",
+                title: "Alistamiento Final Pre-Demo y Conclusiones del Ciclo",
+                icon: "fa-flag-checkered",
+                speaker: "Mynor, Gadiel, Luis Carlos y Fernando",
+                role: "Defensa Integral de los 4 Roles ITIL",
+                camera: { pos: { x: -11, y: 9.2, z: 15 }, target: { x: 0, y: 2, z: -2 } },
+                content: `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <!-- Checklist Pre-Demo (Sección 8 del Reporte) -->
+                        <div class="p-3.5 rounded-xl glass-cream space-y-2">
+                            <div class="font-bold text-tomato-900 uppercase border-b border-stone-300 pb-1 flex items-center justify-between">
+                                <span><i class="fa-solid fa-clipboard-check mr-1"></i> Checklist de Verificación Pre-Demo (Sección 8)</span>
+                                <span class="text-[10px] bg-amber-600 text-white px-2 py-0.5 rounded font-mono">Requisito Bono +5 pts</span>
+                            </div>
+                            <label class="flex items-start gap-2 cursor-pointer">
+                                <input type="checkbox" checked class="mt-0.5 accent-tomato-600">
+                                <span class="text-stone-800"><strong>Cobertura 6/6 del Portafolio:</strong> Casos registrados para Reservaciones en Línea, Pedidos a Domicilio, Sitio Web y Solicitud Odoo.</span>
+                            </label>
+                            <label class="flex items-start gap-2 cursor-pointer">
+                                <input type="checkbox" checked class="mt-0.5 accent-tomato-600">
+                                <span class="text-stone-800"><strong>Prioridad Caso #13 y Problema #2:</strong> Elevar caída de ERP a prioridad Alta y completar categoría/RCA en Problema #2.</span>
+                            </label>
+                            <label class="flex items-start gap-2 cursor-pointer">
+                                <input type="checkbox" checked class="mt-0.5 accent-tomato-600">
+                                <span class="text-stone-800"><strong>Depuración (CSI-08):</strong> Limpiar los 39 artículos vacíos (IDs 10-48), Cambio #4 de prueba y corregir fabricante EPSON en CMDB.</span>
+                            </label>
+                            <label class="flex items-start gap-2 cursor-pointer">
+                                <input type="checkbox" checked class="mt-0.5 accent-tomato-600">
+                                <span class="text-stone-800"><strong>Receptor IA en Línea:</strong> Estación con <code>llama-server (:18080)</code> y receptor <code>(:8090)</code> activos en Tailscale para vaciar la cola en vivo.</span>
+                            </label>
+                        </div>
+
+                        <!-- Conclusiones Ejecutivas -->
+                        <div class="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-2.5 flex flex-col justify-between">
+                            <div>
+                                <div class="font-bold text-amber-400 uppercase"><i class="fa-solid fa-award mr-1"></i> Valor Entregado al Negocio "El Tomato"</div>
+                                <p class="text-cream-100/90 mt-1 leading-relaxed">
+                                    1. <strong>Ciclo ITIL Completo:</strong> Estrategia, Diseño, Transición, Operación y Mejora Continua integrados sobre una sola instancia real de GLPI 10.0.15.<br>
+                                    2. <strong>Medición Propia:</strong> Plugin <em>Dashboard ITIL</em> que traduce tickets técnicos a impacto en ventas de restaurante.<br>
+                                    3. <strong>IA Responsable y Auditable:</strong> Qwen3-14B ataca el cuello de botella exacto (Triage) separando hechos, candidatos y decisión humana.
+                                </p>
+                            </div>
+                            <div class="p-3 rounded-lg bg-gradient-to-r from-tomato-700 to-tomato-900 border border-crust-500/40 text-center">
+                                <div class="font-display font-bold text-base text-white">¡Muchas gracias!</div>
+                                <div class="text-[11px] text-amber-300 font-mono mt-0.5">Pasamos a la Demostración Funcional en Vivo</div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            }
+        ];
+
+        /********************************************************************
+         * 2. PRESENTATION STATE & NAVIGATION LOGIC
+         ********************************************************************/
+        let currentSlideIndex = 0;
+        let isPure3D = false;
+
+        function renderSlide(index) {
+            currentSlideIndex = index;
+            const slide = slidesData[index];
+
+            // Update Header & Content
+            document.getElementById('slide-tag').textContent = slide.tag;
+            document.getElementById('slide-cam-label').innerHTML = `<i class="fa-solid fa-video"></i> <span>${slide.camLabel}</span>`;
+            document.getElementById('slide-title').textContent = slide.title;
+            document.getElementById('slide-icon').innerHTML = `<i class="fa-solid ${slide.icon}"></i>`;
+            document.getElementById('slide-body').innerHTML = slide.content;
+
+            // Update Bottom Station Pills
+            const pillsContainer = document.getElementById('station-pills');
+            pillsContainer.innerHTML = slidesData.map((s, idx) => {
+                const active = idx === currentSlideIndex;
+                return `
+                    <button onclick="goToSlide(${idx})" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shrink-0 ${
+                        active 
+                        ? 'bg-gradient-to-r from-tomato-600 to-tomato-700 text-white shadow-md border border-amber-400/50 glow-badge' 
+                        : 'bg-white/5 hover:bg-white/15 text-cream-200/70 border border-white/10'
+                    }">
+                        <i class="fa-solid ${s.icon} text-[11px]"></i>
+                        <span>${s.shortName}</span>
+                    </button>
+                `;
+            }).join('');
+
+            // Animate 3D Camera to Station Target
+            moveCameraTo(slide.camera.pos, slide.camera.target);
+        }
+
+        function nextSlide() {
+            const next = (currentSlideIndex + 1) % slidesData.length;
+            renderSlide(next);
+        }
+
+        function prevSlide() {
+            const prev = (currentSlideIndex - 1 + slidesData.length) % slidesData.length;
+            renderSlide(prev);
+        }
+
+        function goToSlide(index) {
+            renderSlide(index);
+        }
+
+        function focusCurrentStation() {
+            const slide = slidesData[currentSlideIndex];
+            moveCameraTo(slide.camera.pos, slide.camera.target);
+        }
+
+        function togglePure3D() {
+            isPure3D = !isPure3D;
+            const mainUi = document.getElementById('main-ui');
+            const restoreBtn = document.getElementById('restore-ui-btn');
+            if (isPure3D) {
+                mainUi.classList.add('opacity-0', 'pointer-events-none');
+                restoreBtn.classList.remove('hidden');
+                restoreBtn.classList.add('flex');
+            } else {
+                mainUi.classList.remove('opacity-0', 'pointer-events-none');
+                restoreBtn.classList.add('hidden');
+                restoreBtn.classList.remove('flex');
+            }
+        }
+
+        // Keyboard shortcuts
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+            if (e.key.toLowerCase() === 'h') togglePure3D();
+        });
+
+        /********************************************************************
+         * 3. THREE.JS 3D PIZZERIA "EL TOMATO" SCENE BUILDER
+         ********************************************************************/
+        let scene, camera, renderer;
+        let currentCamPos = new THREE.Vector3(0, 11, 19);
+        let targetCamPos = new THREE.Vector3(0, 11, 19);
+        let currentLookAt = new THREE.Vector3(0, 2, 0);
+        let targetLookAt = new THREE.Vector3(0, 2, 0);
+
+        // Animated 3D Objects
+        let aiCoreMesh, aiRing1, aiRing2;
+        let fireParticles = [];
+        let floatingPizzas = [];
+        let dataPackets = [];
+        const hotspots3D = [];
+
+        // Mouse drag camera orbit offset
+        let isDragging = false;
+        let prevMouse = { x: 0, y: 0 };
+        let orbitOffset = { theta: 0, phi: 0 };
+
+        function moveCameraTo(pos, look) {
+            targetCamPos.set(pos.x, pos.y, pos.z);
+            targetLookAt.set(look.x, look.y, look.z);
+            orbitOffset.theta = 0;
+            orbitOffset.phi = 0;
+        }
+
+        function createCheckerboardTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            const tiles = 8;
+            const size = 512 / tiles;
+            for (let y = 0; y < tiles; y++) {
+                for (let x = 0; x < tiles; x++) {
+                    ctx.fillStyle = (x + y) % 2 === 0 ? '#2b211d' : '#f3e5d0';
+                    ctx.fillRect(x * size, y * size, size, size);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(4, 4);
+            return texture;
+        }
+
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x120e0c);
+            scene.fog = new THREE.FogExp2(0x120e0c, 0.022);
+
+            camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 120);
+            camera.position.copy(currentCamPos);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // LIGHTING
+            const ambientLight = new THREE.AmbientLight(0xfff0dd, 0.55);
+            scene.add(ambientLight);
+
+            const mainSpot = new THREE.DirectionalLight(0xffeedd, 0.85);
+            mainSpot.position.set(10, 18, 12);
+            mainSpot.castShadow = true;
+            mainSpot.shadow.mapSize.width = 1024;
+            mainSpot.shadow.mapSize.height = 1024;
+            scene.add(mainSpot);
+
+            // Warm Oven Glow Light
+            const ovenLight = new THREE.PointLight(0xff5500, 2.2, 14);
+            ovenLight.position.set(0, 2.4, -6.2);
+            scene.add(ovenLight);
+
+            // Cyan AI Core Glow Light
+            const aiLight = new THREE.PointLight(0x38bdf8, 1.8, 12);
+            aiLight.position.set(7.2, 4.2, -6.2);
+            scene.add(aiLight);
+
+            // Dashboard Wall Light
+            const dashLight = new THREE.PointLight(0x10b981, 1.4, 10);
+            dashLight.position.set(-7.2, 3.8, -6.2);
+            scene.add(dashLight);
+
+            buildPizzeriaArchitecture();
+            buildBrickPizzaOven();
+            buildPOSCounterStation();
+            buildServerAndAIStation();
+            buildDashboardWallStation();
+            buildDiningTablesAndPizzas();
+            create3DHotspotLabels();
+
+            // Mouse / Touch Interaction for rotating around the pizzeria
+            const dom = renderer.domElement;
+            dom.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                prevMouse = { x: e.clientX, y: e.clientY };
+            });
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = (e.clientX - prevMouse.x) * 0.005;
+                const dy = (e.clientY - prevMouse.y) * 0.005;
+                orbitOffset.theta -= dx;
+                orbitOffset.phi = Math.max(-0.4, Math.min(0.6, orbitOffset.phi + dy));
+                prevMouse = { x: e.clientX, y: e.clientY };
+            });
+            window.addEventListener('mouseup', () => { isDragging = false; });
+
+            // Touch support
+            dom.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                }
+            });
+            window.addEventListener('touchmove', (e) => {
+                if (!isDragging || e.touches.length !== 1) return;
+                const dx = (e.touches[0].clientX - prevMouse.x) * 0.005;
+                const dy = (e.touches[0].clientY - prevMouse.y) * 0.005;
+                orbitOffset.theta -= dx;
+                orbitOffset.phi = Math.max(-0.4, Math.min(0.6, orbitOffset.phi + dy));
+                prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            });
+            window.addEventListener('touchend', () => { isDragging = false; });
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // 3.1 FLOOR & WALLS
+        function buildPizzeriaArchitecture() {
+            const floorGeo = new THREE.BoxGeometry(22, 0.4, 18);
+            const floorMat = new THREE.MeshStandardMaterial({
+                map: createCheckerboardTexture(),
+                roughness: 0.6,
+                metalness: 0.1
+            });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.position.set(0, -0.2, 0);
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Terracotta Back Wall & Left/Right Half Walls
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x5c2318, roughness: 0.85 });
+            const trimMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4 });
+
+            const backWall = new THREE.Mesh(new THREE.BoxGeometry(22, 7.5, 0.5), wallMat);
+            backWall.position.set(0, 3.75, -8.8);
+            backWall.receiveShadow = true;
+            scene.add(backWall);
+
+            const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 7.5, 18), wallMat);
+            leftWall.position.set(-10.8, 3.75, 0);
+            scene.add(leftWall);
+
+            // Top Signboard "RESTAURANTE EL TOMATO"
+            const signBoard = new THREE.Mesh(
+                new THREE.BoxGeometry(8.5, 1.3, 0.4),
+                new THREE.MeshStandardMaterial({ color: 0xD9381E, roughness: 0.3 })
+            );
+            signBoard.position.set(0, 6.5, -8.4);
+            scene.add(signBoard);
+
+            const signBorder = new THREE.Mesh(
+                new THREE.BoxGeometry(8.8, 1.5, 0.3),
+                trimMat
+            );
+            signBorder.position.set(0, 6.5, -8.45);
+            scene.add(signBorder);
+
+            // Giant 3D Tomato Emblem above the Sign
+            const tomatoBody = new THREE.Mesh(
+                new THREE.SphereGeometry(0.65, 24, 24),
+                new THREE.MeshStandardMaterial({ color: 0xe62e1b, roughness: 0.25, metalness: 0.1 })
+            );
+            tomatoBody.scale.set(1.2, 0.9, 1.2);
+            tomatoBody.position.set(0, 7.7, -8.3);
+            scene.add(tomatoBody);
+
+            const stem = new THREE.Mesh(
+                new THREE.ConeGeometry(0.35, 0.3, 6),
+                new THREE.MeshStandardMaterial({ color: 0x2E7D32 })
+            );
+            stem.position.set(0, 8.3, -8.3);
+            scene.add(stem);
+        }
+
+        // 3.2 STONE PIZZA OVEN (CENTER BACK - STATION 6 CSI)
+        function buildBrickPizzaOven() {
+            const ovenGroup = new THREE.Group();
+            ovenGroup.position.set(0, 0, -7.2);
+
+            // Base
+            const base = new THREE.Mesh(
+                new THREE.BoxGeometry(4.2, 1.8, 2.6),
+                new THREE.MeshStandardMaterial({ color: 0x3d3530, roughness: 0.9 })
+            );
+            base.position.y = 0.9;
+            base.castShadow = true;
+            ovenGroup.add(base);
+
+            // Brick Dome
+            const dome = new THREE.Mesh(
+                new THREE.SphereGeometry(2.0, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+                new THREE.MeshStandardMaterial({ color: 0x9e3623, roughness: 0.75 })
+            );
+            dome.position.y = 1.8;
+            ovenGroup.add(dome);
+
+            // Chimney
+            const chimney = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.35, 0.42, 2.4, 16),
+                new THREE.MeshStandardMaterial({ color: 0x7c2d12 })
+            );
+            chimney.position.set(0, 4.2, -0.3);
+            ovenGroup.add(chimney);
+
+            // Glowing Fire Cavity
+            const fireMouth = new THREE.Mesh(
+                new THREE.BoxGeometry(1.6, 0.9, 0.6),
+                new THREE.MeshBasicMaterial({ color: 0xff6600 })
+            );
+            fireMouth.position.set(0, 2.25, 1.15);
+            ovenGroup.add(fireMouth);
+
+            // Animated Fire Particles inside Oven
+            for (let i = 0; i < 18; i++) {
+                const p = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.12 + Math.random() * 0.1, 8, 8),
+                    new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0xffaa00 : 0xff3300 })
+                );
+                p.position.set((Math.random() - 0.5) * 1.1, 1.9 + Math.random() * 0.5, 1.2 + Math.random() * 0.3);
+                p.userData = { baseY: p.position.y, speed: 2 + Math.random() * 3, offset: Math.random() * Math.PI * 2 };
+                ovenGroup.add(p);
+                fireParticles.push(p);
+            }
+
+            scene.add(ovenGroup);
+        }
+
+        // 3.3 MAIN POS COUNTER STATION (CAJA PRINCIPAL ZONA 10 - CASO #40)
+        function buildPOSCounterStation() {
+            const posGroup = new THREE.Group();
+            posGroup.position.set(-4.5, 0, -2.5);
+
+            // Counter Desk
+            const counter = new THREE.Mesh(
+                new THREE.BoxGeometry(4.6, 1.2, 1.6),
+                new THREE.MeshStandardMaterial({ color: 0x7f1d1d, roughness: 0.6 })
+            );
+            counter.position.y = 0.6;
+            counter.castShadow = true;
+            posGroup.add(counter);
+
+            const counterTop = new THREE.Mesh(
+                new THREE.BoxGeometry(4.8, 0.14, 1.8),
+                new THREE.MeshStandardMaterial({ color: 0xf5e6d3, roughness: 0.3 })
+            );
+            counterTop.position.y = 1.27;
+            posGroup.add(counterTop);
+
+            // 1) POS-SUC01 Touchscreen Monitor
+            const posStand = new THREE.Mesh(
+                new THREE.BoxGeometry(0.25, 0.4, 0.25),
+                new THREE.MeshStandardMaterial({ color: 0x1f2937 })
+            );
+            posStand.position.set(-0.8, 1.5, 0);
+            posGroup.add(posStand);
+
+            const posScreen = new THREE.Mesh(
+                new THREE.BoxGeometry(1.1, 0.75, 0.1),
+                new THREE.MeshStandardMaterial({ color: 0x111827 })
+            );
+            posScreen.position.set(-0.8, 1.9, 0);
+            posScreen.rotation.x = -0.15;
+            posGroup.add(posScreen);
+
+            const posDisplay = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.98, 0.62),
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+            );
+            posDisplay.position.set(-0.8, 1.9, 0.06);
+            posDisplay.rotation.x = -0.15;
+            posGroup.add(posDisplay);
+
+            // 2) Thermal Printer PRN-TM20-Caja1 (Highlighted for Case #40!)
+            const printer = new THREE.Mesh(
+                new THREE.BoxGeometry(0.55, 0.42, 0.6),
+                new THREE.MeshStandardMaterial({ color: 0x1e293b })
+            );
+            printer.position.set(0.3, 1.55, 0.1);
+            posGroup.add(printer);
+
+            // Paper Receipt sticking out of PRN-TM20-Caja1
+            const receipt = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.38, 0.45),
+                new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+            );
+            receipt.position.set(0.3, 1.9, 0.1);
+            receipt.rotation.x = -0.3;
+            posGroup.add(receipt);
+
+            // 3) Cash Drawer (Cajón de dinero)
+            const cashDrawer = new THREE.Mesh(
+                new THREE.BoxGeometry(0.9, 0.22, 0.75),
+                new THREE.MeshStandardMaterial({ color: 0x374151 })
+            );
+            cashDrawer.position.set(-0.8, 1.45, -0.35);
+            posGroup.add(cashDrawer);
+
+            // 4) Payment Terminal (Pinpad)
+            const pinpad = new THREE.Mesh(
+                new THREE.BoxGeometry(0.28, 0.18, 0.42),
+                new THREE.MeshStandardMaterial({ color: 0x0f172a })
+            );
+            pinpad.position.set(1.15, 1.42, 0.25);
+            pinpad.rotation.y = 0.3;
+            posGroup.add(pinpad);
+
+            // 5) Barcode Scanner (Lector de códigos)
+            const scanner = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.08, 0.12, 0.45, 12),
+                new THREE.MeshStandardMaterial({ color: 0xd9381e })
+            );
+            scanner.position.set(1.65, 1.55, 0);
+            posGroup.add(scanner);
+
+            scene.add(posGroup);
+        }
+
+        // 3.4 SERVER RACK & AI CORE HOLOGRAM (RIGHT BACK - STATION 4 IA)
+        function buildServerAndAIStation() {
+            const techGroup = new THREE.Group();
+            techGroup.position.set(7.2, 0, -6.5);
+
+            // Server Rack Cabinet (Raspberry Pi Docker + GLPI + Dual-WAN Router)
+            const rack = new THREE.Mesh(
+                new THREE.BoxGeometry(2.2, 4.2, 1.8),
+                new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.4, metalness: 0.6 })
+            );
+            rack.position.y = 2.1;
+            rack.castShadow = true;
+            techGroup.add(rack);
+
+            // Glowing Server Blades inside Rack
+            for (let i = 0; i < 6; i++) {
+                const blade = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.8, 0.12, 0.05),
+                    new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0x10b981 : 0x38bdf8 })
+                );
+                blade.position.set(0, 0.8 + i * 0.52, 0.92);
+                techGroup.add(blade);
+            }
+
+            // Floating Hologram Brain: Qwen3-14B + Broker GET
+            aiCoreMesh = new THREE.Mesh(
+                new THREE.IcosahedronGeometry(0.75, 1),
+                new THREE.MeshStandardMaterial({
+                    color: 0x38bdf8,
+                    emissive: 0x0284c7,
+                    emissiveIntensity: 0.8,
+                    wireframe: true
+                })
+            );
+            aiCoreMesh.position.set(0, 5.2, 0);
+            techGroup.add(aiCoreMesh);
+
+            aiRing1 = new THREE.Mesh(
+                new THREE.TorusGeometry(1.15, 0.04, 12, 48),
+                new THREE.MeshBasicMaterial({ color: 0xf59e0b })
+            );
+            aiRing1.position.set(0, 5.2, 0);
+            techGroup.add(aiRing1);
+
+            aiRing2 = new THREE.Mesh(
+                new THREE.TorusGeometry(1.4, 0.03, 12, 48),
+                new THREE.MeshBasicMaterial({ color: 0x10b981 })
+            );
+            aiRing2.position.set(0, 5.2, 0);
+            aiRing2.rotation.x = Math.PI / 3;
+            techGroup.add(aiRing2);
+
+            scene.add(techGroup);
+
+            // Data Packets traveling between POS Counter (-4.5, 2, -2.5) and AI Rack (7.2, 3.5, -6.5)
+            for (let i = 0; i < 8; i++) {
+                const pkt = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.11, 10, 10),
+                    new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0x38bdf8 : 0xf59e0b })
+                );
+                pkt.userData = { progress: i / 8, speed: 0.004 + (i % 3) * 0.001 };
+                scene.add(pkt);
+                dataPackets.push(pkt);
+            }
+        }
+
+        // 3.5 DASHBOARD WALL MONITOR (LEFT BACK - STATION 2 DASHBOARD ITIL)
+        function buildDashboardWallStation() {
+            const dashGroup = new THREE.Group();
+            dashGroup.position.set(-7.5, 3.2, -8.3);
+
+            const frame = new THREE.Mesh(
+                new THREE.BoxGeometry(4.6, 2.7, 0.2),
+                new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3 })
+            );
+            dashGroup.add(frame);
+
+            // Dashboard Screen Canvas Texture
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 300;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, 512, 300);
+
+            // Header bar
+            ctx.fillStyle = '#D9381E';
+            ctx.fillRect(0, 0, 512, 42);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillText('GLPI 10 • DASHBOARD ITIL - EL TOMATO', 18, 28);
+
+            // KPI Cards
+            ctx.fillStyle = '#064e3b';
+            ctx.fillRect(20, 60, 145, 95);
+            ctx.fillStyle = '#34d399';
+            ctx.font = 'bold 34px monospace';
+            ctx.fillText('100%', 45, 115);
+            ctx.font = '14px sans-serif';
+            ctx.fillText('SLA Cumplido (11)', 30, 142);
+
+            ctx.fillStyle = '#1e3a8a';
+            ctx.fillRect(182, 60, 145, 95);
+            ctx.fillStyle = '#60a5fa';
+            ctx.font = 'bold 30px monospace';
+            ctx.fillText('2.3m', 212, 115);
+            ctx.font = '14px sans-serif';
+            ctx.fillText('1ra Respuesta', 205, 142);
+
+            ctx.fillStyle = '#7f1d1d';
+            ctx.fillRect(345, 60, 145, 95);
+            ctx.fillStyle = '#fca5a5';
+            ctx.font = 'bold 34px monospace';
+            ctx.fillText('20', 395, 115);
+            ctx.font = '14px sans-serif';
+            ctx.fillText('Sin Clasificar!', 368, 142);
+
+            // Bottom Backlog Bar
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(20, 175, 470, 100);
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillText('Backlog Activo: 25 Casos | Vencidos: 6 | MTTR: 0.08h', 35, 215);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '16px monospace';
+            ctx.fillText('Plugin: itilkpi v1.0.0 • Verificado 04/11/2026', 35, 250);
+
+            const screenTex = new THREE.CanvasTexture(canvas);
+            const screenMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(4.3, 2.45),
+                new THREE.MeshBasicMaterial({ map: screenTex })
+            );
+            screenMesh.position.z = 0.12;
+            dashGroup.add(screenMesh);
+
+            scene.add(dashGroup);
+        }
+
+        // 3.6 DINING TABLES & 3D PIZZAS (FOREGROUND - STATION 3 KPIS)
+        function buildDiningTablesAndPizzas() {
+            const tablePositions = [
+                { x: -3.2, z: 3.5 },
+                { x: 2.2, z: 3.5 },
+                { x: 6.2, z: 1.8 }
+            ];
+
+            tablePositions.forEach((pos, idx) => {
+                const tGroup = new THREE.Group();
+                tGroup.position.set(pos.x, 0, pos.z);
+
+                // Table Leg & Top
+                const leg = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.18, 0.25, 1.3, 16),
+                    new THREE.MeshStandardMaterial({ color: 0x27272a })
+                );
+                leg.position.y = 0.65;
+                tGroup.add(leg);
+
+                const top = new THREE.Mesh(
+                    new THREE.CylinderGeometry(1.35, 1.35, 0.12, 24),
+                    new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.4 })
+                );
+                top.position.y = 1.32;
+                top.castShadow = true;
+                tGroup.add(top);
+
+                // 3D Pizza on Table
+                const pizzaGroup = new THREE.Group();
+                pizzaGroup.position.set(0, 1.42, 0);
+
+                const crust = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.62, 0.62, 0.06, 20),
+                    new THREE.MeshStandardMaterial({ color: 0xd97706 })
+                );
+                pizzaGroup.add(crust);
+
+                const cheese = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.54, 0.54, 0.07, 20),
+                    new THREE.MeshStandardMaterial({ color: 0xfacc15 })
+                );
+                pizzaGroup.add(cheese);
+
+                // Pepperonis
+                for (let p = 0; p < 6; p++) {
+                    const angle = (p / 6) * Math.PI * 2;
+                    const pep = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.09, 0.09, 0.08, 12),
+                        new THREE.MeshStandardMaterial({ color: 0x991b1b })
+                    );
+                    pep.position.set(Math.cos(angle) * 0.3, 0.01, Math.sin(angle) * 0.3);
+                    pizzaGroup.add(pep);
+                }
+
+                tGroup.add(pizzaGroup);
+                floatingPizzas.push(pizzaGroup);
+                scene.add(tGroup);
+            });
+        }
+
+        // 3.7 3D FLOATING HOTSPOT LABELS IN DOM
+        function create3DHotspotLabels() {
+            const definitions = [
+                { text: "📊 Dashboard ITIL (itilkpi)", pos: new THREE.Vector3(-7.5, 4.9, -8.0), slideIdx: 1 },
+                { text: "🖥️ Caja Principal Zona 10 (Caso #40)", pos: new THREE.Vector3(-4.5, 2.8, -2.5), slideIdx: 4 },
+                { text: "🔥 Registro CSI (10 Mejoras)", pos: new THREE.Vector3(0, 4.5, -6.5), slideIdx: 5 },
+                { text: "🧠 EL TOMATO IA V9.4.6 (Qwen3-14B)", pos: new THREE.Vector3(7.2, 6.5, -6.5), slideIdx: 3 },
+                { text: "🍕 KPIs por Proceso (51 CI / 62 Rel)", pos: new THREE.Vector3(2.2, 2.5, 3.5), slideIdx: 2 }
+            ];
+
+            const container = document.getElementById('labels-container');
+            definitions.forEach(def => {
+                const el = document.createElement('button');
+                el.className = "pointer-events-auto absolute px-2.5 py-1 rounded-full bg-black/75 hover:bg-tomato-600 text-cream-100 border border-amber-400/50 text-[11px] font-semibold shadow-lg transition transform -translate-x-1/2 -translate-y-1/2 whitespace-nowrap";
+                el.innerHTML = def.text;
+                el.onclick = () => goToSlide(def.slideIdx);
+                container.appendChild(el);
+                hotspots3D.push({ element: el, worldPos: def.pos });
+            });
+        }
+
+        function updateHotspotPositions() {
+            hotspots3D.forEach(h => {
+                const projected = h.worldPos.clone().project(camera);
+                if (projected.z > 1) {
+                    h.element.style.display = 'none';
+                    return;
+                }
+                const x = (projected.x * 0.5 + 0.5) * window.innerWidth;
+                const y = (-(projected.y * 0.5) + 0.5) * window.innerHeight;
+                h.element.style.display = 'block';
+                h.element.style.left = `${x}px`;
+                h.element.style.top = `${y}px`;
+            });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ANIMATION LOOP
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now() * 0.001;
+
+            // Smooth Camera Lerp + User Orbit Offset
+            currentCamPos.lerp(targetCamPos, 0.05);
+            currentLookAt.lerp(targetLookAt, 0.06);
+
+            const offsetVec = currentCamPos.clone().sub(currentLookAt);
+            offsetVec.applyAxisAngle(new THREE.Vector3(0, 1, 0), orbitOffset.theta);
+            camera.position.copy(currentLookAt).add(offsetVec);
+            camera.position.y += orbitOffset.phi * 5;
+            camera.lookAt(currentLookAt);
+
+            // Rotate AI Hologram Core
+            if (aiCoreMesh) {
+                aiCoreMesh.rotation.y = time * 0.8;
+                aiCoreMesh.rotation.x = time * 0.4;
+                aiRing1.rotation.z = time * 1.2;
+                aiRing2.rotation.y = -time * 1.0;
+            }
+
+            // Animate Oven Fire Particles
+            fireParticles.forEach(p => {
+                p.position.y = p.userData.baseY + Math.sin(time * p.userData.speed + p.userData.offset) * 0.18;
+            });
+
+            // Subtle rotation on 3D Pizzas
+            floatingPizzas.forEach((pz, i) => {
+                pz.rotation.y = time * 0.3 + i;
+            });
+
+            // Animate Data Packets between POS Counter and AI Rack
+            const startPos = new THREE.Vector3(-4.5, 2.1, -2.5);
+            const endPos = new THREE.Vector3(7.2, 4.8, -6.5);
+            dataPackets.forEach(pkt => {
+                pkt.userData.progress = (pkt.userData.progress + pkt.userData.speed) % 1;
+                const t = pkt.userData.progress;
+                pkt.position.lerpVectors(startPos, endPos, t);
+                pkt.position.y += Math.sin(t * Math.PI) * 2.2;
+            });
+
+            updateHotspotPositions();
+            renderer.render(scene, camera);
+        }
+
+        // Initialize Everything on Load
+        window.onload = function () {
+            initThreeJS();
+            renderSlide(0);
+            animate();
+        };
+    </script>
+</body>
+</html>
